@@ -27,5 +27,8 @@ int main() {
         std::plus<int>{}
     );
 
+    if(result) std::cout << *result << std::endl;
+    else std::cout << "Failed to get result" << std::endl;
+
     return 0;
 }
