@@ -11,6 +11,21 @@
 #include <vector>
 #include <unordered_map>
 
+bool isSafe(int lhs, int rhs, bool increasing) {
+    // Increase but was marked decreasing
+    if(lhs > rhs && !increasing)
+        return false;
+    // Decrease but was marked Increasing
+    if(lhs < rhs && increasing)
+        return false;
+    // More than 3
+    auto change = abs(lhs - rhs);
+    if(change > 3 || change < 1)
+        return false;
+
+    return true;
+}
+
 int main() {
 
     int safetyScore = 0;
@@ -26,19 +41,7 @@ int main() {
         bool increasing = levels[1] > levels[0];
         bool safe = true;
         for(int i = 1; i < levels.size(); i++) {
-            // Increase but was marked decreasing
-            if(levels[i] > levels[i - 1] && !increasing) {
-                safe = false;
-                break;
-            }
-            // Decrease but was marked Increasing
-            if(levels[i] < levels[i - 1] && increasing) {
-                safe = false;
-                break;
-            }
-            // More than 3
-            auto change = abs(levels[i] - levels[i - 1]);
-            if(change > 3 || change < 1) {
+            if(!isSafe(levels[i], levels[i - 1], increasing)) {
                 safe = false;
                 break;
             }
