@@ -48,10 +48,16 @@ int main() {
         }
         
 
+        auto safetyTrial = [](auto levels, int notSafe) {
+            levels.erase(levels.begin() + notSafe);
+            return findNotSafe(levels);
+        };
+
         int notSafe = findNotSafe(levels);
         if(notSafe != -1) {
-            levels.erase(levels.begin() + notSafe);
-            notSafe = findNotSafe(levels);
+            if(notSafe = safetyTrial(levels, notSafe); notSafe != -1) {
+                notSafe = safetyTrial(levels, notSafe - 1);
+            };
         }
 
         if(notSafe == -1) safetyScore++;
