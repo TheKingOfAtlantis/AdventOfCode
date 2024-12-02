@@ -8,6 +8,7 @@
 #include <ranges>
 #include <algorithm>
 #include <numeric>
+#include <span>
 #include <vector>
 #include <unordered_map>
 
@@ -36,7 +37,6 @@ int findNotSafe(std::span<int> levels) {
 }
 
 int main() {
-
     int safetyScore = 0;
     for(std::string input; std::getline(std::cin, input);) {
         std::stringstream ss(input);    
@@ -54,13 +54,12 @@ int main() {
         };
 
         int notSafe = findNotSafe(levels);
-        if(notSafe != -1) {
-            if(notSafe = safetyTrial(levels, notSafe); notSafe != -1) {
-                notSafe = safetyTrial(levels, notSafe - 1);
-            };
+        for(int i = 0; i < levels.size(); i++) {
+            if(safetyTrial(levels, i) == -1) {
+                safetyScore++;
+                break;
+            }
         }
-
-        if(notSafe == -1) safetyScore++;
     }
 
     std::cout << "Safety score: " << safetyScore << std::endl;
