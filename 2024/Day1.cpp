@@ -4,10 +4,11 @@
 #include <string>
 #include <iostream>
 
-#include <vector>
 #include <ranges>
 #include <algorithm>
 #include <numeric>
+#include <vector>
+#include <unordered_map>
 
 int main() {
     std::vector<int> lhs, rhs;
@@ -27,8 +28,24 @@ int main() {
         std::plus<int>{}
     );
 
-    if(result) std::cout << *result << std::endl;
+    if(result) std::cout << "Total Distance: "<< *result << std::endl;
     else std::cout << "Failed to get result" << std::endl;
 
+    std::unordered_map<int, std::size_t> count;
+    std::size_t similarityScore = 0;
+    for(auto val : lhs) {
+        if(!count.contains(val)) {
+            std::size_t score = 0;
+            for(int i = 0; i < rhs.size(); i++)
+                if(rhs[i] == val)
+                    score++;
+            score *= val;
+            count[val] = score;
+            similarityScore += score;
+        } else similarityScore += count[val];
+    }
+    
+    std::cout << "Similarity Score: "<< similarityScore << std::endl;
+    
     return 0;
 }
