@@ -26,6 +26,15 @@ bool isSafe(int lhs, int rhs, bool increasing) {
     return true;
 }
 
+int findNotSafe(std::span<int> levels) {
+    bool increasing = levels[1] > levels[0];
+    for(int i = 1; i < levels.size(); i++) {
+        if(!isSafe(levels[i], levels[i - 1], increasing))
+            return i;
+    }
+    return -1;
+}
+
 int main() {
 
     int safetyScore = 0;
@@ -38,16 +47,14 @@ int main() {
             levels.push_back(current);
         }
         
-        bool increasing = levels[1] > levels[0];
-        bool safe = true;
-        for(int i = 1; i < levels.size(); i++) {
-            if(!isSafe(levels[i], levels[i - 1], increasing)) {
-                safe = false;
-                break;
-            }
+
+        int notSafe = findNotSafe(levels);
+        if(notSafe != -1) {
+            levels.erase(levels.begin() + notSafe);
+            notSafe = findNotSafe(levels);
         }
 
-        if(safe) safetyScore++;
+        if(notSafe == -1) safetyScore++;
     }
 
     std::cout << "Safety score: " << safetyScore << std::endl;
