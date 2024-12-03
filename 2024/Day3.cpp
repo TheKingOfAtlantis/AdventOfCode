@@ -34,11 +34,24 @@ std::pair<std::size_t, std::size_t> findNextMul(std::string_view str) {
     };
 }
 
+auto parseMul(std::string_view str) {
+    constexpr std::string_view mul = "mul(";
+    str.remove_prefix(mul.size());
+    str.remove_suffix(1);
+
+    auto delimiter = str.find(",");
+    auto lhs = str.substr(0, delimiter);
+    auto rhs = str.substr(delimiter + 1);
+
+    return std::stoi(std::string(lhs)) * std::stoi(std::string(rhs));
+}
+
 int main() {
     constexpr std::string_view test = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
 
     auto [start, len] = findNextMul(test);
     auto inst = test.substr(start, len);
+    auto res = parseMul(inst);
 
     return 0;
 }
