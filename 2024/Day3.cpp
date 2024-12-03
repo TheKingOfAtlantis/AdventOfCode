@@ -54,7 +54,11 @@ auto parseMul(std::string_view str) {
 }
 
 int main() {
-    std::string_view instructions = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
+
+    std::string input, instructions;
+    while(std::getline(std::cin, input)) {
+        instructions += input;
+    }
 
     std::size_t prodSum = 0;
 
@@ -66,6 +70,8 @@ int main() {
         prodSum += parseMul(inst);
         instructions = instructions.substr(start + len);
     }
+
+    std::cout << "Cumulative Sum of mul(...): " << prodSum << std::endl;
 
     return 0;
 }
