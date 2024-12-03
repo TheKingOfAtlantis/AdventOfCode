@@ -53,6 +53,25 @@ auto parseMul(std::string_view str) {
     return std::stoi(std::string(lhs)) * std::stoi(std::string(rhs));
 }
 
+auto findDont(std::string_view str) {
+    return str.find("don't()");
+}
+auto findDo(std::string_view str) {
+    return str.find("do()");
+}
+
+std::pair<std::size_t, std::size_t> findNextDoRegion(std::string_view str) {
+    constexpr std::string_view _do = "do()";
+
+    auto start = findDo(str) + _do.size();
+    auto end   = findDont(str);
+
+    if(start == std::string_view::npos) return {start, 0};
+    if(end == std::string_view::npos) return {start, std::string_view::npos};
+
+    return std::make_pair(start, end - start);
+}
+
 int main() {
 
     std::string input, instructions;
@@ -60,8 +79,20 @@ int main() {
         instructions += input;
     }
 
-    std::size_t prodSum = 0;
+    instructions = "do()" + instructions;
 
+    std::string valid = "";
+    while(!instructions.empty()) {
+        auto [start, len] = findNextDoRegion(instructions);
+        if(len == 0) break;
+        valid += instructions.substr(start, len);
+        if(len == std::string_view::npos) break;
+        instructions = instructions.substr(start + len + sizeof("don't()") - 1);
+    }
+
+    instructions = valid;
+
+    std::size_t prodSum = 0;
     while(!instructions.empty()) {
         auto [start, len] = findNextMul(instructions);
         if(start == std::string_view::npos) break;
