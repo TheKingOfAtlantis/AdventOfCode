@@ -22,15 +22,22 @@
 std::pair<std::size_t, std::size_t> findNextMul(std::string_view str) {
     std::size_t next = 0;
     while(true) {
-        next = str.find("mul(", next + 1);
+        next = str.find("mul(", next);
+        if(next == std::string_view::npos) return {next, 0};
+
         auto idx = next + 4;
         
         for(auto maxDigits = 3; std::isdigit(str[idx]) && maxDigits--; idx++);
-        if(str[idx++] != ',') continue;
+        if(str[idx++] != ',') {
+            next = idx;
+            continue;
+        }
         for(auto maxDigits = 3; std::isdigit(str[idx]) && maxDigits--; idx++);
-        if(str[idx] != ')') continue;
-
-        return std::make_pair(next, idx - next + 1);
+        if(str[idx] != ')') {
+            next = idx;
+            continue;
+        }
+        return {next, idx - next + 1};
     };
 }
 
@@ -47,11 +54,18 @@ auto parseMul(std::string_view str) {
 }
 
 int main() {
-    constexpr std::string_view test = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
+    std::string_view instructions = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
 
-    auto [start, len] = findNextMul(test);
-    auto inst = test.substr(start, len);
-    auto res = parseMul(inst);
+    std::size_t prodSum = 0;
+
+    while(!instructions.empty()) {
+        auto [start, len] = findNextMul(instructions);
+        if(start == std::string_view::npos) break;
+
+        auto inst = instructions.substr(start, len);
+        prodSum += parseMul(inst);
+        instructions = instructions.substr(start + len);
+    }
 
     return 0;
 }
