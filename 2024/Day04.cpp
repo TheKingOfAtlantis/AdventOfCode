@@ -7,6 +7,19 @@
 #include <format>
 #include <print>
 
+std::stringstream puzzle(
+    "MMMSXXMASM\n"
+    "MSAMXMSMSA\n"
+    "AMXSXMAAMM\n"
+    "MSAMASMSMX\n"
+    "XMASAMXAMM\n"
+    "XXAMMXXAMA\n"
+    "SMSMSASXSS\n"
+    "SAXAMASAAA\n"
+    "MAMMMXMMMM\n"
+    "MXMXAXMASX"
+);
+
 std::size_t matches(const std::string& str, const std::regex& regex) {
     std::sregex_iterator begin(str.begin(), str.end(), regex);
     std::sregex_iterator end{};
@@ -21,7 +34,7 @@ int main() {
     std::string elements = "";
 
     std::string input;
-    while(std::getline(std::cin, input) && !input.empty()) {
+    while(std::getline(puzzle, input) && !input.empty()) {
         if(rows == 0)
             columns = input.size() - 1;
         elements += input + '\n';
