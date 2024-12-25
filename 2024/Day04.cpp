@@ -26,6 +26,10 @@ std::stringstream puzzle(
 constexpr std::string_view XMAS = "XMAS";
 constexpr std::string_view MAS  = "MAS";
 
+const int getLineLength(std::string_view str) {
+    return str.find_first_of('\n') + 1;
+}
+
 std::vector<int> getSkipSizes(int lineLength) {
     return std::vector{
         1, -1, 
@@ -34,8 +38,7 @@ std::vector<int> getSkipSizes(int lineLength) {
     };
 }
 auto getSkipSizes(std::string_view str) {
-    const int lineLength = str.find_first_of('\n') + 1;
-    return getSkipSizes(lineLength);
+    return getSkipSizes(getLineLength(str));
 } 
 
 bool hasXMASMatch(
@@ -54,9 +57,28 @@ bool hasXMASMatch(
 bool hasCrossMASMatch(
     std::string_view str,
     int root,
-    std::size_t lineWidth
+    int lineWidth
 ) {
-    return false;
+    if(str[root] != 'A') return false;
+
+    std::string substringA, substringB;
+    for(auto skip : std::vector{ lineWidth - 1, 0, -lineWidth + 1 }) {
+        const auto idx = root + skip;
+        if(idx < 0 || idx > str.length()) return false;
+        substringA += str[idx];
+    }
+    for(auto skip : std::vector{ lineWidth + 1, 0, -lineWidth - 1 }) {
+        const auto idx = root - skip;
+        if(idx < 0 || idx > str.length()) return false;
+        substringB += str[idx];
+    }
+
+    auto isMatch = [](std::string_view str) {
+        static constexpr std::string reversed{MAS.rbegin(), MAS.rend()};
+        return str == MAS or str == reversed;
+    };
+
+    return isMatch(substringA) && isMatch(substringB);
 }
 
 std::string substring(
@@ -85,7 +107,6 @@ void getXMASMatches(
     OnMatch&& onMatch
 ) {
     const auto skipSizes = getSkipSizes(str);
-    std::size_t count = 0;
     for(int i = 0; i < str.length(); i++) {
         if(str[i] != XMAS[0]) continue; // First character always wrong
         for(auto skip : skipSizes)
@@ -99,9 +120,10 @@ void getCrossMASMatches(
     std::string_view str,
     OnMatch&& onMatch
 ) {
-    std::size_t count = 0;
+    auto lineLength = getLineLength(str);
     for(int i = 0; i < str.length(); i++) {
-        if(hasCrossMASMatch(str, i, skip)) onMatch(i, 0);
+        if(hasCrossMASMatch(str, i, lineLength))
+            onMatch(i, lineLength);
     }
 }
 
