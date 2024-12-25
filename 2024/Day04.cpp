@@ -114,7 +114,7 @@ std::string invertHeatmap(
 
 int main() {
     std::string elements = "";
-    for(std::string input; std::getline(puzzle, input) && !input.empty();)
+    for(std::string input; std::getline(std::cin, input) && !input.empty();)
         elements += input + '\n';
 
     auto matchCount = matches(elements);
