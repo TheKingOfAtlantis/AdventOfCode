@@ -8,6 +8,8 @@
 #include <format>
 #include <print>
 
+#include <ranges>
+
 std::stringstream puzzle(
     "MMMSXXMASM\n"
     "MSAMXMSMSA\n"
@@ -21,37 +23,69 @@ std::stringstream puzzle(
     "MXMXAXMASX"
 );
 
-std::size_t matches(const std::string& str, const std::regex& regex) {
-    std::sregex_iterator begin(str.begin(), str.end(), regex);
-    std::sregex_iterator end{};
-    
+constexpr std::string_view XMAS = "XMAS";
+
+std::vector<int> getSkipSizes(int lineLength) {
+    return std::vector{
+        1, -1, 
+        -lineLength - 1, -lineLength, -lineLength + 1,
+         lineLength - 1,  lineLength,  lineLength + 1
+    };
+}
+auto getSkipSizes(std::string_view str) {
+    const int lineLength = str.find_first_of('\n') + 1;
+    return getSkipSizes(lineLength);
+} 
+
+bool hasMatch(
+    std::string_view str,
+    int root,
+    int skip
+) {
+    for(int j = 1; j < XMAS.length(); j++) {
+        const auto idx = root + j * skip;
+        if(idx < 0 || idx > str.length()) return false;
+        if(XMAS[j] != str[idx]) return false;
+    }
+    return true;
+}
+
+
+template<typename OnMatch>
+    requires std::invocable<OnMatch, std::size_t /*root*/, int /* skip */>
+void getMatches(
+    std::string_view str,
+    OnMatch&& onMatch
+) {
+    const auto skipSizes = getSkipSizes(str);
     std::size_t count = 0;
-    for(auto it = begin; it != end; it++) count++;
+    for(int i = 0; i < str.length(); i++) {
+        if(str[i] != XMAS[0]) continue; // First character always wrong
+        for(auto skip : skipSizes)
+            if(hasMatch(str, i, skip)) onMatch(i, skip);
+    }
+}
+
+std::size_t matches(std::string_view str) {
+    std::size_t count = 0;
+    getMatches(str, [&count](auto,auto) { count++; });
     return count;
 }
 
-std::string verification(const std::string& str, const std::regex& regex, bool hasGroups = false) {
-    std::string out;
-    std::regex_replace(std::back_inserter(out), str.begin(), str.end(), regex, hasGroups ? ".$1.$2.$3." : "....");
-    return out;
-}
-
-std::string combineVerificationHeatmap(
-    const std::string& lhs, 
-    const std::string& rhs
-) {
-    std::string out;
-    for(int i = 0; i < lhs.length(); i++) {
-        if(lhs[i] == '.' || rhs[i] == '.')
-            out += '.';
-        else out += lhs[i];
+std::string verification(std::string_view str) {
+    std::string out(str);
+    getMatches(str, [&out](auto root, auto skip) {
+        for(int j = 0; j < XMAS.length(); j++) {
+            const auto idx = root + j * skip;
+            out[idx] = '.';
     }
+    });
     return out;
 }
 
 std::string invertHeatmap(
-    const std::string& original,
-    const std::string& heatmap
+    std::string_view original,
+    std::string_view heatmap
 ) {
     std::string out;
     for(int i = 0; i < original.length(); i++)
@@ -67,36 +101,13 @@ int main() {
     std::string input;
     while(std::getline(puzzle, input) && !input.empty()) {
         if(rows == 0)
-            columns = input.size() - 1;
+            columns = input.size();
         elements += input + '\n';
         rows++;
     };
 
-    std::cout << "'XMAS' matches:\n" << invertHeatmap(elements, verification(elements, std::regex("XMAS"))) << "\n\n"
-              << "'SAMX' matches:\n" << invertHeatmap(elements, verification(elements, std::regex("SAMX"))) << "\n\n";
-
-    std::size_t counts = 0;
-    std::string heatmap = elements;
-
-    auto find = [&](const std::string& pattern) {
-        auto map = verification(elements, std::regex(pattern), true);
-        heatmap = combineVerificationHeatmap(heatmap, map);
-
-        auto match = matches(elements, std::regex(pattern));
-        counts += match;
-
-        std::cout << std::format("'{}[count: {}]':\n{}\n\n", pattern, match, invertHeatmap(elements, map));
-    };
-    
-    find("XMAS");
-    find("SAMX");
-
-    for(int i = -1; i <= 1; i++) find(std::format(R"(X([\w\n]{{{0}}})M([\w\n]{{{0}}})A([\w\n]{{{0}}})S)", columns + 1 + i));
-    for(int i = -1; i <= 1; i++) find(std::format(R"(S([\w\n]{{{0}}})A([\w\n]{{{0}}})M([\w\n]{{{0}}})X)", columns + 1 + i));
-
-    std::cout << "Combined:\n" << invertHeatmap(elements, heatmap);
-
-    std::cout << "Number of XMAS entries: " << counts;
+    auto matchCount = matches(elements);
+    std::cout << "Number of XMAS entries: " << matchCount << '\n';
 
     return 0;
 }
