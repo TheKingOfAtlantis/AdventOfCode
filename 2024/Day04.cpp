@@ -96,7 +96,7 @@ std::string verification(std::string_view str) {
         for(int j = 0; j < XMAS.length(); j++) {
             const auto idx = root + j * skip;
             out[idx] = '.';
-    }
+        }
     });
     return out;
 }
@@ -113,16 +113,9 @@ std::string invertHeatmap(
 }
 
 int main() {
-    std::size_t rows = 0, columns = 0;
     std::string elements = "";
-
-    std::string input;
-    while(std::getline(puzzle, input) && !input.empty()) {
-        if(rows == 0)
-            columns = input.size();
+    for(std::string input; std::getline(puzzle, input) && !input.empty();)
         elements += input + '\n';
-        rows++;
-    };
 
     auto matchCount = matches(elements);
     std::cout << "Number of XMAS entries: " << matchCount << '\n';
