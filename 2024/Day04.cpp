@@ -24,7 +24,7 @@ std::stringstream puzzle(
 );
 
 constexpr std::string_view XMAS = "XMAS";
-constexpr std::string_view MAS = "MAS";
+constexpr std::string_view MAS  = "MAS";
 
 std::vector<int> getSkipSizes(int lineLength) {
     return std::vector{
@@ -117,17 +117,24 @@ std::size_t matches(std::string_view str, Matcher&& matcher) {
     return count;
 }
 
-
-std::string verificationXMAS(std::string_view str) {
-    std::string out(str);
-    getXMASMatches(str, [&out](auto root, auto skip) {
+struct XMASHeatmapMarker {
+    std::string& heatmap;
+    void operator()(std::size_t root, int skip) {
         for(int j = 0; j < XMAS.length(); j++) {
             const auto idx = root + j * skip;
-            out[idx] = '.';
+            heatmap[idx] = '.';
         }
-    });
-    return out;
-}
+    };
+};
+
+struct CrossMASHeatmapMarker {
+    std::string& heatmap;
+    void operator()(std::size_t root, int lineLength) {
+        std::vector points{0, lineLength - 1, lineLength + 1, -lineLength - 1, -lineLength + 1};
+        for(auto offset : points)
+             heatmap[root + offset] = '.';
+    };
+};
 
 std::string invertHeatmap(
     std::string_view original,
@@ -138,6 +145,13 @@ std::string invertHeatmap(
         if(heatmap[i] == '.' || original[i] == '\n') out += original[i];
         else out += '.';
     return out;
+}
+
+template<typename HeatmapMarker, typename Matcher>
+std::string verification(std::string_view str, Matcher matcher) {
+    std::string out(str);
+    matcher(str, HeatmapMarker{out});
+    return invertHeatmap(str, out);
 }
 
 int main() {
