@@ -105,15 +105,15 @@ void getCrossMASMatches(
     }
 }
 
-std::size_t matchesXMAS(std::string_view str) {
-    std::size_t count = 0;
-    getXMASMatches(str, [&count](auto,auto) { count++; });
-    return count;
-}
+struct OnMatchCounter {
+    std::size_t& count;
+    constexpr void operator()(auto, auto) noexcept { count++; };
+};
 
-std::size_t matchesCrossMAS(std::string_view str) {
+template<typename Matcher>
+std::size_t matches(std::string_view str, Matcher&& matcher) {
     std::size_t count = 0;
-    getCrossMASMatches(str, [&count](auto, auto) { count++; });
+    matcher(str, OnMatchCounter{count});
     return count;
 }
 
@@ -145,8 +145,8 @@ int main() {
     for(std::string input; std::getline(std::cin, input) && !input.empty();)
         elements += input + '\n';
 
-    auto matchCount = matchesXMAS(elements);
-    std::cout << "Number of XMAS entries: " << matchCount << '\n';
+    std::cout << "Number of XMAS entries: "  << matches(elements, getXMASMatches<OnMatchCounter>)     << '\n'
+              << "Number of X-MAS entries: " << matches(elements, getCrossMASMatches<OnMatchCounter>) << '\n';
 
     return 0;
 }
