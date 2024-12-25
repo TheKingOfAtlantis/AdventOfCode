@@ -50,6 +50,24 @@ bool hasMatch(
     return true;
 }
 
+std::string substring(
+    std::string_view str,
+    int root,
+    int skip,
+    bool match
+) {
+    std::string out = "";
+    for(int j = 0; j < XMAS.length(); j++) {
+        const auto idx = root + j * skip;
+        if(idx < 0 || idx > str.length()) out += '_';
+        else if(str[idx] == '\n') out += 'n';
+        else out += str[idx];
+    }
+
+    if(skip < 0) std::reverse(out.begin(), out.end());
+
+    return std::format("{} [root:{:3}, skip: {:-2}, match: {}]", out, root, skip, match);
+}
 
 template<typename OnMatch>
     requires std::invocable<OnMatch, std::size_t /*root*/, int /* skip */>
