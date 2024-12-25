@@ -24,6 +24,7 @@ std::stringstream puzzle(
 );
 
 constexpr std::string_view XMAS = "XMAS";
+constexpr std::string_view MAS = "MAS";
 
 std::vector<int> getSkipSizes(int lineLength) {
     return std::vector{
@@ -37,7 +38,7 @@ auto getSkipSizes(std::string_view str) {
     return getSkipSizes(lineLength);
 } 
 
-bool hasMatch(
+bool hasXMASMatch(
     std::string_view str,
     int root,
     int skip
@@ -48,6 +49,14 @@ bool hasMatch(
         if(XMAS[j] != str[idx]) return false;
     }
     return true;
+}
+
+bool hasCrossMASMatch(
+    std::string_view str,
+    int root,
+    std::size_t lineWidth
+) {
+    return false;
 }
 
 std::string substring(
@@ -71,7 +80,7 @@ std::string substring(
 
 template<typename OnMatch>
     requires std::invocable<OnMatch, std::size_t /*root*/, int /* skip */>
-void getMatches(
+void getXMASMatches(
     std::string_view str,
     OnMatch&& onMatch
 ) {
@@ -80,19 +89,38 @@ void getMatches(
     for(int i = 0; i < str.length(); i++) {
         if(str[i] != XMAS[0]) continue; // First character always wrong
         for(auto skip : skipSizes)
-            if(hasMatch(str, i, skip)) onMatch(i, skip);
+            if(hasXMASMatch(str, i, skip)) onMatch(i, skip);
     }
 }
 
-std::size_t matches(std::string_view str) {
+template<typename OnMatch>
+    requires std::invocable<OnMatch, std::size_t /*root*/, int /* skip */>
+void getCrossMASMatches(
+    std::string_view str,
+    OnMatch&& onMatch
+) {
     std::size_t count = 0;
-    getMatches(str, [&count](auto,auto) { count++; });
+    for(int i = 0; i < str.length(); i++) {
+        if(hasCrossMASMatch(str, i, skip)) onMatch(i, 0);
+    }
+}
+
+std::size_t matchesXMAS(std::string_view str) {
+    std::size_t count = 0;
+    getXMASMatches(str, [&count](auto,auto) { count++; });
     return count;
 }
 
-std::string verification(std::string_view str) {
+std::size_t matchesCrossMAS(std::string_view str) {
+    std::size_t count = 0;
+    getCrossMASMatches(str, [&count](auto, auto) { count++; });
+    return count;
+}
+
+
+std::string verificationXMAS(std::string_view str) {
     std::string out(str);
-    getMatches(str, [&out](auto root, auto skip) {
+    getXMASMatches(str, [&out](auto root, auto skip) {
         for(int j = 0; j < XMAS.length(); j++) {
             const auto idx = root + j * skip;
             out[idx] = '.';
@@ -117,7 +145,7 @@ int main() {
     for(std::string input; std::getline(std::cin, input) && !input.empty();)
         elements += input + '\n';
 
-    auto matchCount = matches(elements);
+    auto matchCount = matchesXMAS(elements);
     std::cout << "Number of XMAS entries: " << matchCount << '\n';
 
     return 0;
