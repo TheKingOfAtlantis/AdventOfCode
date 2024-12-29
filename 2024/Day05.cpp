@@ -86,16 +86,31 @@ int main(int argc, char* argv[]) {
         }
     });
 
-    for(auto [lhs, rhs] : pageOrdering)
-        std::println("{}|{}", lhs, rhs);
+    std::set<int> pages;
+    for(auto set : updateSet)
+        for(auto page : set)
+            pages.insert(page);
+    
+    auto contains = [](
+        std::ranges::range auto& rng, 
+        std::predicate<std::ranges::range_value_t<std::decay_t<decltype(rng)>>> auto&& predicate
+    ) {
+        for(auto val : rng)
+            if(predicate(val)) return true;
+        return false;
+    };
+    for(auto ordering : pageOrdering)
+        std::println("{}|{}: First - {}, Second - {}", 
+            ordering.first, ordering.second,
+            pages.contains(ordering.first), pages.contains(ordering.second)
+        );
 
-    for(auto [i, update] : updateSet | std::views::enumerate) {
-        std::string output = "";
-        for(int j = 0; j < update.size() - 1; j++)
-            output += std::format("{},", update[j]);
-        output += std::format("{}\n", update.back());
-        std::print("Set {}: {}", i, output);
-    }
+    for(auto page : pages)
+        std::println("{}: First - {}, Second - {}", 
+            page,
+            contains(pageOrdering, [page](PageOrdering order) -> bool { return page == order.first; }),
+            contains(pageOrdering, [page](PageOrdering order) -> bool { return page == order.second; })
+        );
 
     return 0;
 }
