@@ -3,12 +3,16 @@
 // https://adventofcode.com/2024/day/5
 
 #include <string>
+#include <format>
 #include <regex>
+
 #include <iostream>
 #include <sstream>
-#include <format>
 #include <print>
+
 #include <ranges>
+#include <vector>
+#include <set>
 
 std::stringstream example(
 R"(47|53
@@ -51,8 +55,44 @@ enum class ParserState {
     OutputSelection
 };
 
+using PageOrdering = std::pair<int, int>;
+
+struct PageRule {
+    int page;
+    mutable std::set<int> followers;
+
+    bool mustPreceed(int otherPage) noexcept {
+        return followers.contains(otherPage);
+    }
+};
+
+template<> struct std::less<PageRule> : std::less<int> {
+    using is_transparent = std::true_type;
+
+    constexpr bool operator()(const PageRule& lhs, const PageRule& rhs) const {
+        return std::less<int>::operator()(lhs.page, rhs.page);
+    };
+    constexpr bool operator()(const PageRule& lhs, int rhs) const {
+        return std::less<int>::operator()(lhs.page, rhs);
+    }
+    constexpr bool operator()(int lhs, const PageRule& rhs) const {
+        return std::less<int>::operator()(lhs, rhs.page);
+    };
+};
+
+std::set<PageRule> determineRules(std::span<PageOrdering> orderings) {
+    std::set<PageRule> rules;
+
+    for(auto ordering : orderings) {
+        if(auto it = rules.find(ordering.first); it != rules.cend())
+            it->followers.insert(ordering.second);
+        else rules.insert({ordering.first, { ordering.second }});
+    }
+
+    return rules;
+}
+
 int main(int argc, char* argv[]) {
-    using PageOrdering = std::pair<int, int>;
     std::vector<PageOrdering> pageOrdering;
     std::vector<std::vector<int>> updateSet;
 
@@ -86,31 +126,15 @@ int main(int argc, char* argv[]) {
         }
     });
 
-    std::set<int> pages;
-    for(auto set : updateSet)
-        for(auto page : set)
-            pages.insert(page);
-    
-    auto contains = [](
-        std::ranges::range auto& rng, 
-        std::predicate<std::ranges::range_value_t<std::decay_t<decltype(rng)>>> auto&& predicate
-    ) {
-        for(auto val : rng)
-            if(predicate(val)) return true;
-        return false;
-    };
-    for(auto ordering : pageOrdering)
-        std::println("{}|{}: First - {}, Second - {}", 
-            ordering.first, ordering.second,
-            pages.contains(ordering.first), pages.contains(ordering.second)
-        );
+    auto rules = determineRules(pageOrdering)
 
-    for(auto page : pages)
-        std::println("{}: First - {}, Second - {}", 
-            page,
-            contains(pageOrdering, [page](PageOrdering order) -> bool { return page == order.first; }),
-            contains(pageOrdering, [page](PageOrdering order) -> bool { return page == order.second; })
-        );
+    for(auto rule : rules) {
+        std::cout << rule.page << ": ";
+        for(auto page : rule.followers)
+            std::cout << page << " ";
+        std::cout << "\n";
+    }
+
 
     return 0;
 }
