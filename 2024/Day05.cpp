@@ -13,11 +13,17 @@ std::stringstream example(
     ""
 );
 
+void parseStream(std::istream& stream, std::invocable<std::string> auto&& lineReader) {
+    for(std::string line; !stream.eof(); std::getline(stream, line))
+        lineReader(line);
+}
+
 int main(int argc, char* argv[]) {
 
     std::string input;
-    for(std::string line; std::getline(std::cin, line) && !line.empty();)
+    parseStream(std::cin, [&input](const std::string& line) {
         input += line + '\n';
+    });
 
     return 0;
 }
