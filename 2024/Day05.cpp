@@ -93,13 +93,18 @@ std::set<PageRule> determineRules(std::span<PageOrdering> orderings) {
     return rules;
 }
 
-bool isOrdered(std::span<int> pages, std::set<PageRule> rules) {
+bool isOrdered(int lhs, int rhs, const std::set<PageRule>& rules) {
+    auto it = rules.find(rhs);
+    if(it != rules.cend())
+        if(it->mustPreceed(lhs)) return false;
+    return true;
+}
+
+bool isOrdered(std::span<int> pages, const std::set<PageRule>& rules) {
     for(int i = 0; i < pages.size(); i++)
         for(int j = 0; j < i; j++) {
-            auto it = rules.find(pages[i]);
-            if(it != rules.cend()) {
-                if(it->mustPreceed(pages[j])) return false;
-            }
+            if(!isOrdered(pages[j], pages[i], rules)) 
+                return false;
         }
     return true;
 }
@@ -151,8 +156,20 @@ int main(int argc, char* argv[]) {
         std::plus<>{}
     );
 
+    auto part2Result = std::ranges::fold_left_first(updateSet
+        | std::views::filter([&rules](std::span<int> pgs) { return !isOrdered(pgs, rules); })
+        | std::views::transform([&rules](std::vector<int>& pages) {
+            std::ranges::sort(pages, [&rules](auto lhs, auto rhs) { return isOrdered(lhs, rhs, rules); } );
+            return getMiddle(pages);
+        }),
+        std::plus<>{}
+    );
+
     if(part1Result) std::cout << "Part 1: " << *part1Result;
     else std::cout << "Failed to get part 1 result";
+    std::cout << '\n';
+    if(part2Result) std::cout << "Part 2: " << *part2Result;
+    else std::cout << "Failed to get part 2 result";
 
     return 0;
 }
