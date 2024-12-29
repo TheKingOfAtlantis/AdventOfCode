@@ -45,12 +45,24 @@ void parseStream(std::istream& stream, std::invocable<std::string> auto&& lineRe
         lineReader(line);
 }
 
-int main(int argc, char* argv[]) {
+enum class ParserState {
+    PageOrdering,
+    OutputSelection
+};
 
+int main(int argc, char* argv[]) {
+    ParserState state = ParserState::PageOrdering;
     std::string input;
     parseStream(std::cin, [&input](const std::string& line) {
         input += line + '\n';
+        switch(state) {
+        case ParserState::PageOrdering:
+            if(line == "") state = ParserState::OutputSelection;
+        case ParserState::OutputSelection:
+            break;
+        }
     });
+
 
     return 0;
 }
