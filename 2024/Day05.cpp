@@ -51,6 +51,9 @@ enum class ParserState {
 };
 
 int main(int argc, char* argv[]) {
+    using PageOrdering = std::pair<int, int>;
+    std::vector<PageOrdering> pageOrdering;
+
     ParserState state = ParserState::PageOrdering;
     std::string input;
     parseStream(std::cin, [&input](const std::string& line) {
@@ -58,6 +61,10 @@ int main(int argc, char* argv[]) {
         switch(state) {
         case ParserState::PageOrdering:
             if(line == "") state = ParserState::OutputSelection;
+            int lhs, rhs;
+            std::sscanf(line.c_str(), "%d|%d", &lhs, &rhs);
+            pageOrdering.emplace_back(lhs, rhs);
+            break;
         case ParserState::OutputSelection:
             break;
         }
