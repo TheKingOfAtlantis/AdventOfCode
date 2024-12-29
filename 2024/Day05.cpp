@@ -41,7 +41,7 @@ R"(47|53
 );
 
 void parseStream(std::istream& stream, std::invocable<std::string> auto&& lineReader) {
-    for(std::string line; !stream.eof(); std::getline(stream, line))
+    for(std::string line; std::getline(stream, line) && !stream.eof();)
         lineReader(line);
 }
 
