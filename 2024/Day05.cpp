@@ -92,6 +92,17 @@ std::set<PageRule> determineRules(std::span<PageOrdering> orderings) {
     return rules;
 }
 
+bool isOrdered(std::span<int> pages, std::set<PageRule> rules) {
+    for(int i = 0; i < pages.size(); i++)
+        for(int j = 0; j < i; j++) {
+            auto it = rules.find(pages[i]);
+            if(it != rules.cend()) {
+                if(it->mustPreceed(pages[j])) return false;
+            }
+        }
+    return true;
+}
+
 int main(int argc, char* argv[]) {
     std::vector<PageOrdering> pageOrdering;
     std::vector<std::vector<int>> updateSet;
@@ -126,7 +137,7 @@ int main(int argc, char* argv[]) {
         }
     });
 
-    auto rules = determineRules(pageOrdering)
+    auto rules = determineRules(pageOrdering);
 
     for(auto rule : rules) {
         std::cout << rule.page << ": ";
@@ -135,6 +146,14 @@ int main(int argc, char* argv[]) {
         std::cout << "\n";
     }
 
+    for(auto pages : updateSet) {
+        std::string str;
+        for(int i = 0; i < pages.size() - 1; i++)
+            str += std::format("{}, ", pages[i]);
+        str += std::format("{}", pages.back());
+
+        std::println("[ordered: {}] {}", isOrdered(pages, rules), str);
+    }
 
     return 0;
 }
