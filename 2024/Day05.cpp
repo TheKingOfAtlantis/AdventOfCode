@@ -8,6 +8,7 @@
 #include <sstream>
 #include <format>
 #include <print>
+#include <ranges>
 
 std::stringstream example(
 R"(47|53
@@ -41,7 +42,7 @@ R"(47|53
 );
 
 void parseStream(std::istream& stream, std::invocable<std::string> auto&& lineReader) {
-    for(std::string line; std::getline(stream, line) && !stream.eof();)
+    for(std::string line; std::getline(stream, line);)
         lineReader(line);
 }
 
@@ -53,10 +54,11 @@ enum class ParserState {
 int main(int argc, char* argv[]) {
     using PageOrdering = std::pair<int, int>;
     std::vector<PageOrdering> pageOrdering;
+    std::vector<std::vector<int>> updateSet;
 
     ParserState state = ParserState::PageOrdering;
     std::string input;
-    parseStream(std::cin, [&input](const std::string& line) {
+    parseStream(example, [&](const std::string& line) {
         input += line + '\n';
         switch(state) {
         case ParserState::PageOrdering:
@@ -66,10 +68,34 @@ int main(int argc, char* argv[]) {
             pageOrdering.emplace_back(lhs, rhs);
             break;
         case ParserState::OutputSelection:
+            std::vector<int> pages;
+            auto addPage = [&pages](auto start, auto end) {
+                std::string val(start, end);
+                pages.push_back(std::stoi(val));
+            };
+            
+            auto start = line.begin();
+            for(auto end = line.begin(); end != line.cend(); end++)
+                if(*end == ',') {
+                    addPage(start, end);
+                    start = end + 1;
+                }
+            addPage(start, line.cend());
+            updateSet.push_back(pages);
             break;
         }
     });
 
+    for(auto [lhs, rhs] : pageOrdering)
+        std::println("{}|{}", lhs, rhs);
+
+    for(auto [i, update] : updateSet | std::views::enumerate) {
+        std::string output = "";
+        for(int j = 0; j < update.size() - 1; j++)
+            output += std::format("{},", update[j]);
+        output += std::format("{}\n", update.back());
+        std::print("Set {}: {}", i, output);
+    }
 
     return 0;
 }
