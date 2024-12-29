@@ -10,6 +10,7 @@
 #include <sstream>
 #include <print>
 
+#include <algorithm>
 #include <ranges>
 #include <vector>
 #include <set>
@@ -61,7 +62,7 @@ struct PageRule {
     int page;
     mutable std::set<int> followers;
 
-    bool mustPreceed(int otherPage) noexcept {
+    constexpr bool mustPreceed(int otherPage) const noexcept {
         return followers.contains(otherPage);
     }
 };
@@ -103,13 +104,17 @@ bool isOrdered(std::span<int> pages, std::set<PageRule> rules) {
     return true;
 }
 
+auto& getMiddle(std::span<int> pages) {
+    return pages[pages.size()/2];
+}
+
 int main(int argc, char* argv[]) {
     std::vector<PageOrdering> pageOrdering;
     std::vector<std::vector<int>> updateSet;
 
     ParserState state = ParserState::PageOrdering;
     std::string input;
-    parseStream(example, [&](const std::string& line) {
+    parseStream(std::cin, [&](const std::string& line) {
         input += line + '\n';
         switch(state) {
         case ParserState::PageOrdering:
@@ -139,21 +144,15 @@ int main(int argc, char* argv[]) {
 
     auto rules = determineRules(pageOrdering);
 
-    for(auto rule : rules) {
-        std::cout << rule.page << ": ";
-        for(auto page : rule.followers)
-            std::cout << page << " ";
-        std::cout << "\n";
-    }
+    auto part1Result = std::ranges::fold_left_first(
+        updateSet 
+            | std::views::filter([&rules](std::span<int> pgs) { return isOrdered(pgs, rules); })
+            | std::views::transform([](std::span<int> pgs) { return getMiddle(pgs); }),
+        std::plus<>{}
+    );
 
-    for(auto pages : updateSet) {
-        std::string str;
-        for(int i = 0; i < pages.size() - 1; i++)
-            str += std::format("{}, ", pages[i]);
-        str += std::format("{}", pages.back());
-
-        std::println("[ordered: {}] {}", isOrdered(pages, rules), str);
-    }
+    if(part1Result) std::cout << "Part 1: " << *part1Result;
+    else std::cout << "Failed to get part 1 result";
 
     return 0;
 }
